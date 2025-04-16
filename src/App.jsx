@@ -6,7 +6,7 @@ import "./index.css";
 const KEY = 'fe355d4575454cef9f993402251404'
 
 function App() {
-  const [city, setCity] = useState('Zasp')
+  const [city, setCity] = useState('Mi')
   const [weatherData, setWeatherData] =  useState(null)
   const [error, setError] = useState(null)
 
@@ -16,21 +16,24 @@ function App() {
         const res = await fetch(
             `http://api.weatherapi.com/v1/current.json?key=${KEY}&q=${city}`
         )
-        console.log(res)
-        if(!res.ok) {
-          throw new Error(`${res.status} ${res.statusText}`)
-        }
+
         const data = await res.json();
-        setWeatherData(data)
-      } catch (err) {
-        console.log(err)
-        setError(err.message)
+        console.log(data)
+
+        if(data.error){
+          setError(data.error.message)
+        }else{
+          setWeatherData(data)
+        }
+      } catch (error) {
+        console.log(error)
+        setError(error.message)
       }
     }
     getData()
   }, [])
 
-  console.log(weatherData)
+
 
 
 
