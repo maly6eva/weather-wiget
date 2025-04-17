@@ -11,35 +11,58 @@ function App() {
   const [weatherData, setWeatherData] =  useState(null)
   const [error, setError] = useState(null)
   const [loading, setloading] = useState(false)
+  const [coords, setCoords] = useState(null)
+
+
 
   useEffect(() => {
-    if(!city.trim()) return
-    async function getData() {
+    if(!navigator.geolocation){
+      setError('Geolocation is not supported')
+      return;
+    }
+    navigator.geolocation.getCurrentPosition((position) => {
+    console.log(position)
+    const {latitude, longitude} = position.coords
+    setCoords({latitude, longitude} )
+  },
+        (error) => {
+      console.error('Error getting coords', error.message)
+          setError('Failed to get coords')
+        } )
+  },[])
 
-      setloading(true)
+  useEffect(() => {
+    if(!city.trim() && !coords) {
+      setWeatherData(null)
       setError(null)
+      return
+    }
+
+    async function getData() {
+      setloading(true)
       try {
+        const query = city.trim() ? city : `${coords.latitude}, ${coords.longitude}`
         const res = await fetch(
-            `http://api.weatherapi.com/v1/current.json?key=${KEY}&q=${city}`
+            `http://api.weatherapi.com/v1/current.json?key=${KEY}&q=${query}`
         )
-
         const data = await res.json();
-
-
         if(data.error){
           setError(data.error.message)
-        }else{
-          setWeatherData(data)
+          setWeatherData(null)
+          return;
         }
-      } catch (error) {
-        console.log(error)
-        setError(error.message)
+          setWeatherData(data)
+        setError(null)
+      } catch  {
+
+        setError('Failed to fetch data')
+        setWeatherData(null)
       }finally{
         setloading(false)
       }
     }
     getData()
-  }, [city])
+  }, [city, coords])
 
 
 
