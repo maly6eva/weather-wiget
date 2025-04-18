@@ -32,6 +32,10 @@ function App() {
   },[])
 
   useEffect(() => {
+    const controller = new AbortController()
+    const signal = controller.signal
+    console.log(signal)
+
     if(!city.trim() && !coords) {
       setWeatherData(null)
       setError(null)
@@ -43,7 +47,10 @@ function App() {
       try {
         const query = city.trim() ? city : `${coords.latitude}, ${coords.longitude}`
         const res = await fetch(
-            `http://api.weatherapi.com/v1/current.json?key=${KEY}&q=${query}`
+            `http://api.weatherapi.com/v1/current.json?key=${KEY}&q=${query}`,
+            {
+              signal
+            }
         )
         const data = await res.json();
         if(data.error){
@@ -61,7 +68,11 @@ function App() {
         setloading(false)
       }
     }
+
     getData()
+    return () => {
+      controller.abort()
+    }
   }, [city, coords])
 
 
@@ -93,6 +104,7 @@ function renderError(){
 
   return (
     <div className="app">
+      <TimerComponent/>
       <div className="widget-container">
         <div className="weather-card-container">
           <h1 className="app-title">Weather Widget</h1>
@@ -115,4 +127,44 @@ function renderError(){
   );
 }
 
+function TimerComponent() {
+  const [count, setCount] = useState(0);
+  const [isRunning, setIsRunning] = useState(false);
+
+
+  useEffect(() => {
+    let timer;
+
+
+    if (isRunning) {
+      // Устанавливаем таймер, если он включён
+      timer = setInterval(() => {
+        console.log("Timer running:", count);
+        setCount((prev) => prev + 1);
+      }, 1000);
+    }
+
+
+    // Функция очистки таймера
+    return () => {
+      if (timer) {
+        console.log("Cleaning up the timer");
+        clearInterval(timer);
+      }
+    };
+  }, [isRunning]); // Таймер обновляется при изменении isRunning
+
+
+  return (
+      <div>
+        <h1>Timer: {count}</h1>
+        <button onClick={() => setIsRunning((prev) => !prev)}>
+          {isRunning ? "Stop Timer" : "Start Timer"}
+        </button>
+        <button onClick={() => setCount(0)} disabled={isRunning}>
+          Reset Timer
+        </button>
+      </div>
+  );
+}
 export default App;
